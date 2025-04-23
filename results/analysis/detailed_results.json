@@ -1,0 +1,30 @@
+{
+  "codex": {
+    "times": [
+      3.8330035749822855e-06,
+      1.1250085663050413e-06,
+      9.85420192591846e-05
+    ],
+    "memory": null,
+    "complexity": {
+      "lines": 19,
+      "functions": 1,
+      "loops": 1,
+      "conditionals": 2
+    }
+  },
+  "copilot": {
+    "times": [
+      6.584014045074582e-06,
+      2.8329959604889154e-06,
+      0.00018620799528434873
+    ],
+    "memory": null,
+    "complexity": {
+      "lines": 24,
+      "functions": 1,
+      "loops": 3,
+      "conditionals": 1
+    }
+  }
+}
