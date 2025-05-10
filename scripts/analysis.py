@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
 import os
-import time
 import json
-import memory_profiler
-import matplotlib.pyplot as plt
-import pandas as pd
+import time
+import psutil
+import importlib.util
 from pathlib import Path
+from typing import Dict, Any, List
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 import ast
 import asttokens
 import re
@@ -109,29 +112,184 @@ class CodeAnalyzer:
             plt.savefig(self.output_dir / 'complexity_comparison.png')
             plt.close()
 
-def main():
-    # Test cases for the Trapping Rain Water problem
-    test_cases = [
-        {'input': [0,1,0,2,1,0,1,3,2,1,2,1], 'expected': 6},
-        {'input': [4,2,0,3,2,5], 'expected': 9},
-        {'input': [0,1,0,2,1,0,1,3,2,1,2,1] * 100, 'expected': 600},  # Large test case
-    ]
+def load_solution(file_path: str) -> str:
+    """Load a solution from a file."""
+    with open(file_path, 'r') as f:
+        return f.read()
 
-    analyzer = CodeAnalyzer()
+def measure_performance(solution_code: str, test_cases: List[Dict[str, Any]], problem_id: str) -> Dict[str, Any]:
+    """Measure the performance of a solution."""
+    # Create a temporary module
+    spec = importlib.util.spec_from_loader('temp_module', loader=None)
+    module = importlib.util.module_from_spec(spec)
+    
+    # Execute the solution code
+    exec(solution_code, module.__dict__)
+    
+    results = {
+        'execution_times': [],
+        'memory_usage': [],
+        'success_rate': 0
+    }
+    
+    total_tests = len(test_cases)
+    successful_tests = 0
+    
+    for test_case in test_cases:
+        # Measure memory before
+        process = psutil.Process()
+        mem_before = process.memory_info().rss
+        
+        # Measure execution time
+        start_time = time.time()
+        
+        try:
+            if problem_id == 'lru_cache':
+                # Special handling for LRU Cache
+                cache = module.LRUCache(test_case['input']['operations'][1][0][0])
+                result = []
+                for op, args in zip(test_case['input']['operations'][0][1:], test_case['input']['operations'][1][1:]):
+                    if op == 'get':
+                        result.append(cache.get(args[0]))
+                    else:  # put
+                        cache.put(args[0], args[1])
+                        result.append(None)
+                output = result
+            elif problem_id == 'trapping_rain_water':
+                # For trapping rain water, input is a list
+                output = module.trap(test_case['input'])
+            else:
+                # For other problems like word ladder, input is a dictionary
+                output = module.ladderLength(**test_case['input'])
+            
+            execution_time = time.time() - start_time
+            mem_after = process.memory_info().rss
+            
+            # Check if output matches expected
+            if output == test_case['output']:
+                successful_tests += 1
+            
+            results['execution_times'].append(execution_time)
+            results['memory_usage'].append(mem_after - mem_before)
+            
+        except Exception as e:
+            print(f"Error in test case for {problem_id}: {str(e)}")
+            results['execution_times'].append(float('inf'))
+            results['memory_usage'].append(float('inf'))
+    
+    results['success_rate'] = (successful_tests / total_tests) * 100
+    return results
 
-    # Read outputs
-    codex_output = Path('results/codex_output/response_0.txt').read_text()
-    copilot_output = Path('results/copilot_output/response_0.txt').read_text()
-
-    # Compare solutions
-    results = analyzer.compare_solutions(codex_output, copilot_output, test_cases)
-
+def analyze_solutions():
+    """Analyze solutions from both Codex and Copilot."""
+    # Load problem definitions
+    with open('data/problem_prompts.json', 'r') as f:
+        problems = json.load(f)['prompts']
+    
+    results = {}
+    
+    for problem in problems:
+        problem_id = problem['id']
+        print(f"\nAnalyzing {problem_id}...")
+        results[problem_id] = {
+            'codex': {},
+            'copilot': {}
+        }
+        
+        # Analyze Codex solution
+        codex_solution_path = f'results/codex_output/{problem_id}_response.txt'
+        if os.path.exists(codex_solution_path):
+            print(f"Processing Codex solution for {problem_id}")
+            codex_solution = load_solution(codex_solution_path)
+            results[problem_id]['codex'] = measure_performance(
+                codex_solution,
+                problem['examples'],
+                problem_id
+            )
+        
+        # Analyze Copilot solution
+        copilot_solution_path = f'results/copilot_output/{problem_id}_response.txt'
+        if os.path.exists(copilot_solution_path):
+            print(f"Processing Copilot solution for {problem_id}")
+            copilot_solution = load_solution(copilot_solution_path)
+            results[problem_id]['copilot'] = measure_performance(
+                copilot_solution,
+                problem['examples'],
+                problem_id
+            )
+    
     # Generate visualizations
-    analyzer.generate_visualizations(results)
-
-    # Save detailed results
-    with open(analyzer.output_dir / 'detailed_results.json', 'w') as f:
+    generate_visualizations(results)
+    
+    # Save results
+    os.makedirs('results/analysis', exist_ok=True)
+    with open('results/analysis/performance_results.json', 'w') as f:
         json.dump(results, f, indent=2)
+    
+    # Print summary
+    print("\nAnalysis Summary:")
+    for problem_id, problem_results in results.items():
+        print(f"\n{problem_id}:")
+        for source in ['codex', 'copilot']:
+            if problem_results[source]:
+                avg_time = sum(problem_results[source]['execution_times']) / len(problem_results[source]['execution_times'])
+                avg_memory = sum(problem_results[source]['memory_usage']) / len(problem_results[source]['memory_usage'])
+                print(f"  {source.capitalize()}:")
+                print(f"    Success Rate: {problem_results[source]['success_rate']}%")
+                print(f"    Average Time: {avg_time:.6f} seconds")
+                print(f"    Average Memory: {avg_memory:.0f} bytes")
+
+def generate_visualizations(results: Dict[str, Any]):
+    """Generate visualizations for the analysis results."""
+    os.makedirs('results/analysis', exist_ok=True)
+    
+    # Set style
+    sns.set_style("whitegrid")
+    
+    # Create separate plots for each problem and metric
+    for problem_id, problem_results in results.items():
+        # Execution time comparison
+        plt.figure(figsize=(10, 6))
+        execution_times = {
+            'Codex': problem_results['codex'].get('execution_times', []),
+            'Copilot': problem_results['copilot'].get('execution_times', [])
+        }
+        sns.boxplot(data=pd.DataFrame(execution_times))
+        plt.title(f'{problem_id} - Execution Time Comparison')
+        plt.ylabel('Time (seconds)')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(f'results/analysis/{problem_id}_execution_time.png')
+        plt.close()
+        
+        # Memory usage comparison
+        plt.figure(figsize=(10, 6))
+        memory_usage = {
+            'Codex': problem_results['codex'].get('memory_usage', []),
+            'Copilot': problem_results['copilot'].get('memory_usage', [])
+        }
+        sns.boxplot(data=pd.DataFrame(memory_usage))
+        plt.title(f'{problem_id} - Memory Usage Comparison')
+        plt.ylabel('Memory (bytes)')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(f'results/analysis/{problem_id}_memory_usage.png')
+        plt.close()
+        
+        # Create a combined bar plot for success rates
+        plt.figure(figsize=(10, 6))
+        success_rates = {
+            'Codex': problem_results['codex'].get('success_rate', 0),
+            'Copilot': problem_results['copilot'].get('success_rate', 0)
+        }
+        plt.bar(success_rates.keys(), success_rates.values())
+        plt.title(f'{problem_id} - Success Rate Comparison')
+        plt.ylabel('Success Rate (%)')
+        plt.ylim(0, 100)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(f'results/analysis/{problem_id}_success_rate.png')
+        plt.close()
 
 if __name__ == "__main__":
-    main() 
+    analyze_solutions() 

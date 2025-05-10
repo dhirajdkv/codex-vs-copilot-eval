@@ -1,0 +1,70 @@
+{
+  "trapping_rain_water": {
+    "codex": {
+      "execution_times": [
+        4.0531158447265625e-06,
+        1.1920928955078125e-06
+      ],
+      "memory_usage": [
+        0,
+        0
+      ],
+      "success_rate": 100.0
+    },
+    "copilot": {
+      "execution_times": [
+        5.7220458984375e-06,
+        1.9073486328125e-06
+      ],
+      "memory_usage": [
+        0,
+        0
+      ],
+      "success_rate": 100.0
+    }
+  },
+  "word_ladder": {
+    "codex": {
+      "execution_times": [
+        5.2928924560546875e-05,
+        9.5367431640625e-07
+      ],
+      "memory_usage": [
+        0,
+        0
+      ],
+      "success_rate": 100.0
+    },
+    "copilot": {
+      "execution_times": [
+        3.1948089599609375e-05,
+        1.1920928955078125e-06
+      ],
+      "memory_usage": [
+        0,
+        0
+      ],
+      "success_rate": 100.0
+    }
+  },
+  "lru_cache": {
+    "codex": {
+      "execution_times": [
+        1.0013580322265625e-05
+      ],
+      "memory_usage": [
+        0
+      ],
+      "success_rate": 0.0
+    },
+    "copilot": {
+      "execution_times": [
+        1.0967254638671875e-05
+      ],
+      "memory_usage": [
+        0
+      ],
+      "success_rate": 0.0
+    }
+  }
+}

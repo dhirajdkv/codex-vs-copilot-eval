@@ -22,6 +22,65 @@
                 "0 <= height[i] <= 10^5"
             ],
             "function_signature": "def trap(height: List[int]) -> int:"
+        },
+        {
+            "id": "word_ladder",
+            "title": "Word Ladder",
+            "description": "A transformation sequence from word beginWord to word endWord using a dictionary wordList is a sequence of words beginWord -> s1 -> s2 -> ... -> sk such that: Every adjacent pair of words differs by a single letter, and every si for 1 <= i <= k is in wordList.",
+            "examples": [
+                {
+                    "input": {
+                        "beginWord": "hit",
+                        "endWord": "cog",
+                        "wordList": ["hot","dot","dog","lot","log","cog"]
+                    },
+                    "output": 5,
+                    "explanation": "One shortest transformation sequence is 'hit' -> 'hot' -> 'dot' -> 'dog' -> 'cog', which is 5 words long."
+                },
+                {
+                    "input": {
+                        "beginWord": "hit",
+                        "endWord": "cog",
+                        "wordList": ["hot","dot","dog","lot","log"]
+                    },
+                    "output": 0,
+                    "explanation": "The endWord 'cog' is not in wordList, therefore there is no valid transformation sequence."
+                }
+            ],
+            "constraints": [
+                "1 <= beginWord.length <= 10",
+                "endWord.length == beginWord.length",
+                "1 <= wordList.length <= 5000",
+                "wordList[i].length == beginWord.length",
+                "beginWord, endWord, and wordList[i] consist of lowercase English letters",
+                "beginWord != endWord",
+                "All the words in wordList are unique"
+            ],
+            "function_signature": "def ladderLength(beginWord: str, endWord: str, wordList: List[str]) -> int:"
+        },
+        {
+            "id": "lru_cache",
+            "title": "LRU Cache",
+            "description": "Design a data structure that follows the constraints of a Least Recently Used (LRU) cache. Implement the LRUCache class: LRUCache(int capacity) Initialize the LRU cache with positive size capacity. int get(int key) Return the value of the key if the key exists, otherwise return -1. void put(int key, int value) Update the value of the key if the key exists. Otherwise, add the key-value pair to the cache. If the number of keys exceeds the capacity from this operation, evict the least recently used key.",
+            "examples": [
+                {
+                    "input": {
+                        "operations": [
+                            ["LRUCache", "put", "put", "get", "put", "get", "put", "get", "get", "get"],
+                            [[2], [1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]
+                        ]
+                    },
+                    "output": [null, null, null, 1, null, -1, null, -1, 3, 4],
+                    "explanation": "LRUCache lRUCache = new LRUCache(2); lRUCache.put(1, 1); lRUCache.put(2, 2); lRUCache.get(1); lRUCache.put(3, 3); lRUCache.get(2); lRUCache.put(4, 4); lRUCache.get(1); lRUCache.get(3); lRUCache.get(4);"
+                }
+            ],
+            "constraints": [
+                "1 <= capacity <= 3000",
+                "0 <= key <= 10^4",
+                "0 <= value <= 10^5",
+                "At most 2 * 10^5 calls will be made to get and put"
+            ],
+            "function_signature": "class LRUCache:\n    def __init__(self, capacity: int):\n    def get(self, key: int) -> int:\n    def put(self, key: int, value: int) -> None:"
         }
     ]
 } 
